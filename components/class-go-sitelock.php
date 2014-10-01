@@ -2,6 +2,8 @@
 
 class GO_SiteLock
 {
+	private $config = NULL;
+
 	protected $caps_to_disable = array(
 		'activate_plugins',
 		'comment',
@@ -56,6 +58,30 @@ class GO_SiteLock
 	}// end __construct
 
 	/**
+	 * get the plugin's config
+	 */
+	public function config( $key = NULL )
+	{
+		if ( ! $this->config )
+		{
+			$this->config = apply_filters(
+				'go_config',
+				array(
+					'message' => "is currently disabled. Don't worry, this won't take too long and everything should be spiffy in a jiffy!",
+				),
+				'go-sitelock'
+			);
+		}//end if
+
+		if ( $key )
+		{
+			return isset( $this->config[ $key ] ) ? $this->config[ $key ] : NULL;
+		}//end if
+
+		return $this->config;
+	}//end config
+
+	/**
 	 * hooked to the 'comments_open' filter, closes comments for all posts
 	 */
 	public function comments_open( $open )
@@ -90,10 +116,11 @@ class GO_SiteLock
 	 */
 	public function lock_screen( $message )
 	{
+		$message = apply_filters( 'go_sitelock_message', $message . ' ' .  $this->config( 'message' ) );
 		?>
 		<h3>Bonk!</h3>
 		<p class="go-lock-message">
-			<?php echo $message; ?> is currently disabled as we upgrade our system. Don't worry, this won't take too long and everything will be spiffy and new in a jiffy! Please visit <a href='http://twitter.com/gigaomresearch'>http://twitter.com/gigaomresearch</a> for the latest updates.
+			<?php echo wp_kses_post( $message ); ?>
 		</p>
 		<?php
 	}//end lock_screen
