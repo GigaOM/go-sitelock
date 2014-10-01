@@ -2,6 +2,8 @@
 
 class GO_SiteLock
 {
+	private $config = NULL;
+
 	protected $caps_to_disable = array(
 		'activate_plugins',
 		'comment',
@@ -49,11 +51,44 @@ class GO_SiteLock
 	 */
 	public function __construct()
 	{
+		add_action( 'init', array( $this, 'init' ) );
 		add_filter( 'comments_open', array( $this, 'comments_open' ), 99 );
 		add_filter( 'user_has_cap', array( $this, 'user_has_cap' ), 99 );
 
 		add_filter( 'go_site_locked', array( $this, 'go_site_locked' ) );
 	}// end __construct
+
+	/**
+	 * hooked to init to allow for cap filtering
+	 */
+	public function init()
+	{
+		$this->caps_to_disable = apply_filters( 'go_sitelock_disabled_caps', $this->caps_to_disable );
+	}//end init
+
+	/**
+	 * get the plugin's config
+	 */
+	public function config( $key = NULL )
+	{
+		if ( ! $this->config )
+		{
+			$this->config = apply_filters(
+				'go_config',
+				array(
+					'message' => "is currently disabled. Don't worry, this won't take too long and everything should be spiffy in a jiffy!",
+				),
+				'go-sitelock'
+			);
+		}//end if
+
+		if ( $key )
+		{
+			return isset( $this->config[ $key ] ) ? $this->config[ $key ] : NULL;
+		}//end if
+
+		return $this->config;
+	}//end config
 
 	/**
 	 * hooked to the 'comments_open' filter, closes comments for all posts
@@ -90,10 +125,11 @@ class GO_SiteLock
 	 */
 	public function lock_screen( $message )
 	{
+		$message = apply_filters( 'go_sitelock_message', $message . ' ' .  $this->config( 'message' ) );
 		?>
 		<h3>Bonk!</h3>
 		<p class="go-lock-message">
-			<?php echo $message; ?> is currently disabled as we upgrade our system. Don't worry, this won't take too long and everything will be spiffy and new in a jiffy! Please visit <a href='http://twitter.com/gigaomresearch'>http://twitter.com/gigaomresearch</a> for the latest updates.
+			<?php echo wp_kses_post( $message ); ?>
 		</p>
 		<?php
 	}//end lock_screen
