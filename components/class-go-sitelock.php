@@ -51,11 +51,20 @@ class GO_SiteLock
 	 */
 	public function __construct()
 	{
+		add_action( 'init', array( $this, 'init' ) );
 		add_filter( 'comments_open', array( $this, 'comments_open' ), 99 );
 		add_filter( 'user_has_cap', array( $this, 'user_has_cap' ), 99 );
 
 		add_filter( 'go_site_locked', array( $this, 'go_site_locked' ) );
 	}// end __construct
+
+	/**
+	 * hooked to init to allow for cap filtering
+	 */
+	public function init()
+	{
+		$this->caps_to_disable = apply_filters( 'go_sitelock_disabled_caps', $this->caps_to_disable );
+	}//end init
 
 	/**
 	 * get the plugin's config
